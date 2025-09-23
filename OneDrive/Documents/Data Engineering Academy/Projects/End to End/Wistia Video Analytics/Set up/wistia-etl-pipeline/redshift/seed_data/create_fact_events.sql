@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS public.fact_events (
+  event_key                   VARCHAR(255) PRIMARY KEY,
+  received_at                 TIMESTAMP,
+  percent_viewed              FLOAT,
+  embed_url                   VARCHAR(1024),
+  email                       VARCHAR(255),
+  ip                          VARCHAR(50),
+  user_agent_browser          VARCHAR(100),
+  user_agent_browser_version  VARCHAR(50),
+  user_agent_platform         VARCHAR(100),
+  user_agent_mobile           BOOLEAN,
+  visitor_key                 VARCHAR(255),
+  country                     VARCHAR(50),
+  region                      VARCHAR(50),
+  city                        VARCHAR(100),
+  lat                         FLOAT,
+  lon                         FLOAT,
+  org                         VARCHAR(255),
+  media_id                    VARCHAR(50),
+  media_name                  VARCHAR(255)
+);
