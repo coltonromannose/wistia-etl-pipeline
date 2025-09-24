@@ -4,7 +4,6 @@
 # Author: Colton R
 
 
-
 import sys
 from pyspark.context import SparkContext
 from awsglue.context import GlueContext
@@ -66,8 +65,48 @@ glueContext.write_dynamic_frame.from_options(
         "database": "dev"
     }
 )
+###########################################################################################################
+###########################################################################################################
+# --- DIM_MEDIA: build DataFrame from metadata.json ---
+metadata_path = f"{input_path}/metadata.json"
+print(f"Reading DIM_MEDIA from: {metadata_path}")
+metadata_df = spark.read.json(metadata_path)
 
+dim_media_df = metadata_df.select(
+    F.col("hashed_id").alias("media_id"),                 # stable Wistia ID
+    F.col("name").alias("media_name"),
+    F.col("duration").cast("double").alias("duration_seconds"),
+    F.to_timestamp("created").alias("created_at"),
+    F.to_timestamp("updated").alias("updated_at"),
+    F.col("section").alias("section_name"),
+    F.col("subfolder.name").alias("subfolder_name"),
+    F.col("thumbnail.url").alias("thumbnail_url"),
+    F.col("project.name").alias("project_name")
+)
 
+print("DIM_MEDIA schema:")
+dim_media_df.printSchema()
+print("DIM_MEDIA sample row:")
+dim_media_df.show(1, truncate=False)
+
+# --- Write DIM_MEDIA to staging table and trigger upsert ---
+dynamic_dim_media = DynamicFrame.fromDF(dim_media_df, glueContext, "dynamic_dim_media")
+
+glueContext.write_dynamic_frame.from_options(
+    frame=dynamic_dim_media,
+    connection_type="jdbc",
+    connection_options={
+        "url": "jdbc:redshift://wistia-workgroup.156041438776.us-east-1.redshift-serverless.amazonaws.com:5439/dev",
+        "user": "admin",
+        "password": "Newnewrds1!",
+        "dbtable": "public.dim_media_stage",
+        "database": "dev",
+        "preactions": "TRUNCATE public.dim_media_stage",
+        "postactions": "CALL sp_upsert_dim_media();"
+    }
+)
+
+print("✅ Finished writing dim_media_df and executed stored procedure upsert")
 
 
 job.commit()
