@@ -1,6 +1,0 @@
-config {
-    type: "declaration",
-    database: "coltonsproject-493219",
-    schema: "raw",
-    name: "drinks"
-}
